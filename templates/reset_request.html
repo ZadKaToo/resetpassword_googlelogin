@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative">
+    <!-- Background Effects -->
+    <div class="absolute inset-0 z-0">
+        <div class="absolute top-0 -left-4 w-72 h-72 bg-blue-900/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div class="absolute -bottom-8 right-4 w-72 h-72 bg-purple-900/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div class="text-center animate-fade-in">
+            <h2 class="text-4xl font-extrabold text-white tracking-tight">รีเซ็ตรหัสผ่าน</h2>
+            <p class="mt-2 text-sm text-gray-300">
+                กรุณากรอกอีเมลที่ใช้ในการลงทะเบียน เพื่อรับลิงก์สำหรับรีเซ็ตรหัสผ่าน
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-fade-in-delay">
+        <div class="bg-gray-800/80 backdrop-blur-xl py-8 px-4 shadow-2xl sm:rounded-xl sm:px-10 relative border border-gray-700">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-500/20 border border-red-500{% else %}bg-green-500/20 border border-green-500{% endif %} animate-fade-in">
+                            <p class="text-sm {% if category == 'error' %}text-red-200{% else %}text-green-200{% endif %}">{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form id="resetForm" class="space-y-6" action="{{ url_for('forgot_password') }}" method="POST" novalidate>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-200">อีเมล</label>
+                    <div class="mt-1 relative">
+                        <input id="email" name="email" type="email" required 
+                            class="appearance-none block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="example@email.com">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none hidden" id="emailSuccess">
+                            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none hidden" id="emailError">
+                            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-red-400 hidden" id="emailErrorText"></p>
+                </div>
+
+                <!-- Added: Recaptcha placeholder -->
+                {% if config.get('RECAPTCHA_SITE_KEY') %}
+                <div class="g-recaptcha" data-sitekey="{{ config.RECAPTCHA_SITE_KEY }}"></div>
+                {% endif %}
+
+                <div>
+                    <button type="submit" id="submitButton"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                        <span class="flex items-center">
+                            <span id="buttonText">ส่งลิงก์รีเซ็ตรหัสผ่าน</span>
+                            <span id="loadingSpinner" class="hidden ml-2">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Added: Help text -->
+                <div class="mt-4 text-sm text-gray-400 bg-gray-900/50 p-4 rounded-lg">
+                    <h3 class="font-medium text-gray-300 mb-2">คำแนะนำ:</h3>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>ตรวจสอบให้แน่ใจว่าคุณใช้อีเมลที่ลงทะเบียนไว้</li>
+                        <li>ตรวจสอบโฟลเดอร์สแปมหากไม่พบอีเมล</li>
+                        <li>ลิงก์รีเซ็ตรหัสผ่านจะหมดอายุใน 1 ชั่วโมง</li>
+                    </ul>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <a href="{{ url_for('login') }}" 
+                       class="font-medium text-blue-400 hover:text-blue-300 transition-colors duration-150 inline-flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        กลับไปหน้าเข้าสู่ระบบ
+                    </a>
+                </div>
+            </form>
+
+            <!-- Added: Support contact -->
+            <div class="mt-6 pt-6 border-t border-gray-700">
+                <p class="text-sm text-center text-gray-400">
+                    มีปัญหาในการรีเซ็ตรหัสผ่าน?
+                    <a href="{{ url_for('index') }}" class="text-blue-400 hover:text-blue-300 transition-colors duration-150">
+                        ติดต่อฝ่ายสนับสนุน
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('resetForm');
+    const emailInput = document.getElementById('email');
+    const emailSuccess = document.getElementById('emailSuccess');
+    const emailError = document.getElementById('emailError');
+    const emailErrorText = document.getElementById('emailErrorText');
+    const submitButton = document.getElementById('submitButton');
+    const buttonText = document.getElementById('buttonText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    // Email validation
+    function validateEmail(email) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }
+
+    emailInput.addEventListener('input', function() {
+        if (this.value) {
+            if (validateEmail(this.value)) {
+                emailSuccess.classList.remove('hidden');
+                emailError.classList.add('hidden');
+                emailErrorText.classList.add('hidden');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            } else {
+                emailSuccess.classList.add('hidden');
+                emailError.classList.remove('hidden');
+                emailErrorText.classList.remove('hidden');
+                emailErrorText.textContent = 'กรุณากรอกอีเมลให้ถูกต้อง';
+                this.classList.remove('border-green-500');
+                this.classList.add('border-red-500');
+            }
+        } else {
+            emailSuccess.classList.add('hidden');
+            emailError.classList.add('hidden');
+            emailErrorText.classList.add('hidden');
+            this.classList.remove('border-red-500', 'border-green-500');
+        }
+    });
+
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+        if (!validateEmail(emailInput.value)) {
+            e.preventDefault();
+            emailErrorText.textContent = 'กรุณากรอกอีเมลให้ถูกต้อง';
+            emailErrorText.classList.remove('hidden');
+            return;
+        }
+
+        // Show loading state
+        buttonText.textContent = 'กำลังส่ง...';
+        loadingSpinner.classList.remove('hidden');
+        submitButton.disabled = true;
+    });
+
+    // Reset form state on page load
+    emailInput.value = '';
+    emailSuccess.classList.add('hidden');
+    emailError.classList.add('hidden');
+    emailErrorText.classList.add('hidden');
+    buttonText.textContent = 'ส่งลิงก์รีเซ็ตรหัสผ่าน';
+    loadingSpinner.classList.add('hidden');
+    submitButton.disabled = false;
+});
+</script>
+{% endblock %}
+
+<style>
+@keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.animate-blob {
+    animation: blob 7s infinite;
+}
+.animation-delay-4000 {
+    animation-delay: 4s;
+}
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+.animate-fade-in-delay {
+    animation: fadeIn 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+}
+</style>
+{% endblock %}
